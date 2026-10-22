@@ -90,6 +90,7 @@ def convert_markdown(text):
     out = []
     in_list = False
     list_tag = "ul"
+    last_li = None  # index in `out` of the current <li>...</li>, for continuation
     para = []
     quote = []
 
@@ -100,10 +101,11 @@ def convert_markdown(text):
             para = []
 
     def flush_list():
-        nonlocal in_list
+        nonlocal in_list, last_li
         if in_list:
             out.append(f"</{list_tag}>")
             in_list = False
+            last_li = None
 
     def flush_quote():
         nonlocal quote
@@ -173,6 +175,7 @@ def convert_markdown(text):
                 in_list, list_tag = True, "ul"
             box = "&#9989;" if m.group(1).lower() == "x" else "&#9744;"
             out.append(f"<li>{box} {inline(m.group(2))}</li>")
+            last_li = len(out) - 1
             i += 1
             continue
 
@@ -184,6 +187,7 @@ def convert_markdown(text):
                 out.append("<ul>")
                 in_list, list_tag = True, "ul"
             out.append(f"<li>{inline(m.group(1))}</li>")
+            last_li = len(out) - 1
             i += 1
             continue
 
@@ -195,6 +199,7 @@ def convert_markdown(text):
                 out.append("<ol>")
                 in_list, list_tag = True, "ol"
             out.append(f"<li>{inline(m.group(1))}</li>")
+            last_li = len(out) - 1
             i += 1
             continue
 
@@ -220,6 +225,15 @@ def convert_markdown(text):
 
         if not line.strip():
             close_blocks()
+            i += 1
+            continue
+
+        # A non-empty, indented line while inside a list continues the
+        # current list item (wrapped bullets/checkboxes).
+        if in_list and last_li is not None and re.match(r"^\s{2,}\S", line):
+            assert out[last_li].endswith("</li>")
+            out[last_li] = out[last_li][: -len("</li>")].rstrip()
+            out[last_li] += " " + inline(line.strip()) + "</li>"
             i += 1
             continue
 

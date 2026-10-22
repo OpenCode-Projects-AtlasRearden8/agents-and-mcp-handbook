@@ -71,6 +71,36 @@ class BlockTests(unittest.TestCase):
         self.assertEqual(count(html, "<ul>"), 1)
         self.assertIn("<li>alpha</li>", html)
 
+    def test_wrapped_list_item_continues_li(self):
+        html = self.roundtrip(
+            "- first line of the item\n  second line of the same item"
+        )
+        self.assertEqual(count(html, "<ul>"), 1)
+        self.assertEqual(count(html, "<li>"), 1)
+        self.assertIn("second line of the same item", html)
+        self.assertEqual(count(html, "<p>"), 0)
+
+    def test_wrapped_task_list_item_continues_li(self):
+        html = self.roundtrip(
+            "- [ ] **Bold lead.** detail one\n      detail two, still the same bullet."
+        )
+        self.assertEqual(count(html, '<ul class="checklist">'), 1)
+        self.assertEqual(count(html, "<li>"), 1)
+        self.assertIn("detail two, still the same bullet.", html)
+        self.assertEqual(count(html, "<p>"), 0)
+
+    def test_wrapped_ordered_list_item_continues_li(self):
+        html = self.roundtrip("1. one\n   still one\n2. two")
+        self.assertEqual(count(html, "<ol>"), 1)
+        self.assertEqual(count(html, "<li>"), 2)
+        self.assertIn("still one", html)
+        self.assertEqual(count(html, "<p>"), 0)
+
+    def test_paragraph_after_list_not_absorbed(self):
+        html = self.roundtrip("- item\n\nnow a paragraph")
+        self.assertIn("<li>item</li>", html)
+        self.assertIn("<p>now a paragraph</p>", html)
+
     def test_ordered_list(self):
         html = self.roundtrip("1. first\n2. second")
         self.assertIn("<ol>", html)

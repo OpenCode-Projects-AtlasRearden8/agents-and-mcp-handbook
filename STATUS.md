@@ -31,13 +31,15 @@ Asdale Dynamics, LLC.
 
 - `build.py` — stdlib-only static site generator: a small Markdown renderer
   (headings, paragraphs, fenced code, tables, ordered/unordered **and
-  checkbox** lists, blockquotes, rules, inline styles, links with automatic
-  `.md` → `.html` conversion), sidebar navigation, prev/next paging,
-  accessibility basics (skip link, aria labels, semantic HTML).
-  CLI: `--out DIR`, `--check` (build + verify), `--serve` (local preview).
+  checkbox** lists with multi-line lazy continuation, blockquotes, rules,
+  inline styles, links with automatic `.md` → `.html` conversion), sidebar
+  navigation, prev/next paging, accessibility basics (skip link, aria
+  labels, semantic HTML). CLI: `--out DIR`, `--check` (build + verify),
+  `--serve` (local preview).
 - `assets/style.css` — warm, readable typography, responsive layout.
-- `test_build.py` — 17 unit tests covering inline rendering, block
-  structures, escaping, link conversion, full-build output, and the check.
+- `test_build.py` — 21 unit tests covering inline rendering, block
+  structures, escaping, link conversion, wrapped-list continuation,
+  full-build output, and the check.
 
 ### Other files
 
@@ -60,28 +62,39 @@ Python 3.10+ (tested on 3.13). No dependencies, no network needed, no keys.
 
 ## Verification results
 
-All run in this workspace, 2026-10-22:
+All run in this workspace, 2026-10-22 (final verification pass):
 
-- `python3 scripts/test_build.py` — **17/17 tests pass**.
+- `python3 scripts/test_build.py` — **21/21 tests pass**.
 - `python3 scripts/build.py` — builds 10 pages; self-check reports
   *"All checks passed: pages built, links resolve, structure valid."*
   The check verifies: every listed page renders, every internal href/src
   resolves, no unresolved code-block placeholders, no docs links to
   unlisted pages, H1 present on every page.
 - Duplicate build to a second output dir also passed.
+- Preview server (`--serve --port 8123`) verified with curl: HTTP 200 on
+  `index.html` (~10.4 KB), `styles.css` (~5.2 KB), and a chapter page.
 - All generated HTML verified tag-balanced via an `html.parser` walk
   (no unclosed/misnested tags).
-- Preview server (`--serve --port 8123`) verified with curl: HTTP 200 on
-  `index.html` (~10.4 KB) and `styles.css` (~5.2 KB).
-- One defect found and fixed during testing: fenced code blocks were being
-  wrapped in `<p>` and quote characters weren't escaped in code output;
-  both corrected, then re-verified by the suite.
+- Full-content audit: every prose line of every chapter appears in the
+  rendered page, and every fenced code block (including the `05-desktop-setup`
+  JSON configs) renders verbatim, escaped correctly.
+- Two defects found during testing, both fixed and re-verified:
+  fenced code blocks wrapped in `<p>` / unescaped quotes in code output
+  (fixed pre-interruption), and **wrapped list items** — a bullet or
+  checkbox whose text spans lines had its continuation split into stray
+  `<p>` fragments and re-opened lists (visible on `safety-checklist.html`).
+  The renderer now joins indented continuation lines into the current
+  `<li>`; three regression tests cover wrapped bullets, checkboxes, and
+  ordered items, plus a no-absorption test for true paragraphs after lists.
 
 ## Git
 
-Initialized locally, single commit on `main`
-(`f126707 "Add Agents & MCP handbook: docs, static site generator, and tests"`).
-Committed as the existing identity, no co-author trailers, nothing pushed.
+Initialized locally, `main` branch, plain commit messages, no co-author
+trailers, nothing pushed:
+- `f126707` "Add Agents & MCP handbook: docs, static site generator, and tests"
+- `f2d0914` "Add STATUS.md with build and verification notes"
+- plus the wrap-up commit of this final pass (wrapped-list rendering fix,
+  test additions, README polish).
 
 ## Known gaps / next steps
 

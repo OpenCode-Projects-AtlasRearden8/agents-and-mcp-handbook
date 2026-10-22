@@ -49,14 +49,32 @@ python3 scripts/build.py --check   # build to a temp dir + verify links
 python3 scripts/build.py --serve   # build, then preview at http://localhost:8000
 ```
 
+## Run the tests
+
+The generator ships with a small stdlib-only test suite (unit tests for the
+Markdown renderer plus site-level checks that every page builds and every
+internal link resolves):
+
+```bash
+python3 scripts/test_build.py
+```
+
 ## Repository layout
 
 ```
-docs/       The handbook, one Markdown file per chapter
-scripts/    build.py — markdown-to-HTML static site generator (stdlib only)
-site/       Generated output (safe to delete; rebuild any time)
-LICENSE     MIT, © 2026 Asdale Dynamics, LLC
+docs/           The handbook, one Markdown file per chapter
+scripts/        build.py — markdown-to-HTML static site generator (stdlib only)
+scripts/        test_build.py — tests for the generator
+scripts/assets/ The stylesheet the build embeds and ships as styles.css
+site/           Generated output (safe to delete; rebuild any time)
+LICENSE         MIT, © 2026 Asdale Dynamics, LLC
 ```
+
+## Requirements
+
+Python 3.10 or newer. Nothing to install — the generator and its tests use
+only the standard library, work fully offline, and never touch a network
+except when `--serve` listens on your own localhost.
 
 ## A note on safety
 
